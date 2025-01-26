@@ -1,4 +1,8 @@
 import java.util.Scanner;
+import java.awt.Desktop;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.io.IOException;
 
 public class CommandProcessor {
     private DataStorage dataStorage;
@@ -87,8 +91,58 @@ public class CommandProcessor {
                         int linkId = Integer.parseInt(parts[3]);
                         String result = dataStorage.useFastLink(username, password, linkId);
                         System.out.println(result);
+
+                        if (result.startsWith("http")) {
+                            try {
+                                Desktop.getDesktop().browse(new URI(result));
+                            } catch (IOException | URISyntaxException e) {
+                                System.out.println("Failed to open link in browser: " + e.getMessage());
+                            }
+                        }
                     } catch (NumberFormatException e) {
                         System.out.println("Link ID must be a number.");
+                    }
+                }
+                break;
+
+            case "del":
+                if (parts.length < 4) {
+                    System.out.println("Usage: del <username> <password> <linkId>");
+                } else {
+                    String username = parts[1];
+                    String password = parts[2];
+                    try {
+                        int linkId = Integer.parseInt(parts[3]);
+                        boolean success = dataStorage.deleteUserLink(username, password, linkId);
+                        if (success) {
+                            System.out.println("Link removed successfully.");
+                        } else {
+                            System.out.println("Failed to remove link. Invalid credentials or link ID.");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Link ID must be a number.");
+                    }
+                }
+                break;
+
+            case "lchen":
+                if (parts.length < 6) {
+                    System.out.println("Usage: lchen <username> <password> <linkId> <newDuration> <newMaxUses>");
+                } else {
+                    String username = parts[1];
+                    String password = parts[2];
+                    try {
+                        int linkId = Integer.parseInt(parts[3]);
+                        long newDuration = Long.parseLong(parts[4]);
+                        int newMaxUses = Integer.parseInt(parts[5]);
+                        boolean success = dataStorage.editLinkParameters(username, password, linkId, newDuration, newMaxUses);
+                        if (success) {
+                            System.out.println("Link parameters updated successfully.");
+                        } else {
+                            System.out.println("Failed to update link. Invalid credentials or link ID.");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Duration and maxUses must be numbers.");
                     }
                 }
                 break;
@@ -115,6 +169,8 @@ public class CommandProcessor {
                 System.out.println("seel <username> <password> - View all links of a user.");
                 System.out.println("dol <username> <password> <linkId> <duration> <maxUses> - Create a short link for a user.");
                 System.out.println("use <username> <password> <linkId> - Use the ID available fast link.");
+                System.out.println("del <username> <password> <linkId> - Remove a link for a user.");
+                System.out.println("lchen <username> <password> <linkId> <newDuration> <newMaxUses> - Edit link parameters.");
                 System.out.println("save <username> <password> - Save all user links to a file.");
                 System.out.println("help - Show this help message.");
                 break;
@@ -125,4 +181,3 @@ public class CommandProcessor {
         }
     }
 }
-
