@@ -1,9 +1,6 @@
 import java.util.HashMap;
 import java.util.Map;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-
+import java.io.*;
 
 public class DataStorage {
     private Map<String, User> users;
@@ -26,7 +23,7 @@ public class DataStorage {
 
     public boolean addUser(String username, String password) {
         if (users.containsKey(username)) {
-            return false; // User already exists
+            return false;
         }
         users.put(username, new User(username, password));
         return true;
@@ -47,7 +44,6 @@ public class DataStorage {
             return false;
         }
 
-        System.out.println("Displaying links for user: " + username);
         for (Link link : user.getLinks().values()) {
             System.out.println(link.getOriginalUrl());
         }
@@ -95,13 +91,32 @@ public class DataStorage {
 
         Link link = user.getLinks().get(linkId);
         if (!link.isUsable()) {
-            Link newLink = new Link(link.getOriginalUrl(), 3600, 10); // Новый срок действия 1 час, 10 использований
+            Link newLink = new Link(link.getOriginalUrl(), 3600, 10);
             user.getLinks().put(linkId, newLink);
             return "Link was too old. Made new one. FAST LINK WAS USED SUCCESS!";
         }
 
         link.incrementUsage();
         return "FAST LINK WAS USED SUCCESS!";
+    }
+
+    public boolean deleteUserLink(String username, String password, int linkId) {
+        User user = validateUser(username, password);
+        if (user != null && user.getLinks().containsKey(linkId)) {
+            user.getLinks().remove(linkId);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean editLinkParameters(String username, String password, int linkId, long newDuration, int newMaxUses) {
+        User user = validateUser(username, password);
+        if (user != null && user.getLinks().containsKey(linkId)) {
+            Link link = user.getLinks().get(linkId);
+            link.updateParameters(newDuration, newMaxUses);
+            return true;
+        }
+        return false;
     }
 
     public void addGlobalLink(int id, String originalUrl) {
@@ -111,7 +126,6 @@ public class DataStorage {
     }
 
     public void displayGlobalLinks() {
-        System.out.println("Global Links:");
         for (Map.Entry<Integer, Link> entry : globalLinks.entrySet()) {
             System.out.println("ID: " + entry.getKey() + " URL: " + entry.getValue().getOriginalUrl());
         }
@@ -180,6 +194,10 @@ public class DataStorage {
         public void incrementUsage() {
             currentUses++;
         }
+
+        public void updateParameters(long newDuration, int newMaxUses) {
+            this.expirationTime = System.currentTimeMillis() + newDuration * 1000;
+            this.maxUses = newMaxUses;
+        }
     }
 }
-
